@@ -1,0 +1,20 @@
+[tasks.my-test]
+script = [
+'''
+./test.sh
+'''
+]
+dependencies = ["build"]
+
+[tasks.my-clean]
+script = [
+'''
+rm -f 9cc *.o *~ tmp*
+'''
+]
+
+[tasks.my-flow]
+dependencies = [
+    "my-test",
+    "my-clean"
+]
