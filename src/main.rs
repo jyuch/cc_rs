@@ -7,7 +7,7 @@ fn main() {
         process::exit(1);
     }
 
-    let (n, mut remain) = strton(&args[1]);
+    let (n, mut remain) = strtol(&args[1]);
     println!(".intel_syntax noprefix");
     println!(".globl main");
     println!("main:");
@@ -20,7 +20,7 @@ fn main() {
 
         if remain[0..1].eq("+") {
             let r = &remain[1..remain.len()];
-            let (n, r) = strton(r);
+            let (n, r) = strtol(r);
             println!("  add rax, {}", n);
             remain = r;
             continue;
@@ -28,7 +28,7 @@ fn main() {
 
         if remain[0..1].eq("-") {
             let r = &remain[1..remain.len()];
-            let (n, r) = strton(r);
+            let (n, r) = strtol(r);
             println!("  sub rax, {}", n);
             remain = r;
             continue;
@@ -42,7 +42,7 @@ fn main() {
     process::exit(0);
 }
 
-fn strton(value: &str) -> (i32, String) {
+fn strtol(value: &str) -> (i32, String) {
     let position = value
         .find(|it: char| !it.is_numeric())
         .unwrap_or(value.len());
@@ -56,8 +56,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn strton_test() {
-        let (n, remain) = strton("123+");
+    fn strtol_test() {
+        let (n, remain) = strtol("123+");
         assert_eq!(n, 123);
         assert_eq!(remain, "+");
     }
