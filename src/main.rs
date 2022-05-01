@@ -1,64 +1,125 @@
-use std::{env, process};
+mod ctype;
+mod stdlib;
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        eprintln!("引数の個数が正しくありません");
-        process::exit(1);
+use crate::{
+    ctype::{is_digit, is_space},
+    stdlib::strtol,
+};
+use std::env;
+
+enum Token {
+    Reserved(char),
+    Num(i32),
+    //EOF,
+}
+
+#[macro_export]
+macro_rules! error {
+    () => ({
+        std::process::exit(1);
+    });
+    ($($arg:tt)*) => ({
+        eprintln!($($arg)*);
+        std::process::exit(1);
+    })
+}
+
+fn consume(op: char, token: &[Token]) -> (bool, &[Token]) {
+    match token {
+        &[Token::Reserved(o), ..] if o == op => {
+            (true, &token[1..])
+        }
+        _ => (false, &token)
     }
+}
 
-    let (n, mut remain) = strtol(&args[1]);
-    println!(".intel_syntax noprefix");
-    println!(".globl main");
-    println!("main:");
-    println!("  mov rax, {}", n);
+fn expect(op: char, token: &[Token]) -> &[Token] {
+    match token {
+        &[Token::Reserved(o), ..] if o == op => {
+            &token[1..]
+        }
+        _ => error!("{}ではありません", op)
+    }
+}
+
+fn expect_number(token: &[Token]) -> (i32, &[Token]) {
+    match token {
+        &[Token::Num(i), ..] => {
+            (i, &token[1..])
+        }
+        _ => error!("数ではありません")
+    }
+}
+
+fn tokenize(code: &str) -> Vec<Token> {
+    let mut remain = code.to_string();
+    let mut token = vec![];
 
     loop {
         if remain.is_empty() {
             break;
         }
 
-        if remain[0..1].eq("+") {
-            let r = &remain[1..remain.len()];
-            let (n, r) = strtol(r);
+        if is_space(&remain) {
+            remain = remain[1..remain.len()].to_string();
+            continue;
+        }
+
+        let n = &remain[0..1].to_string();
+        if n.eq("+") || n.eq("-") {
+            remain = remain[1..remain.len()].to_string();
+            token.push(Token::Reserved(n.chars().next().unwrap()));
+            continue;
+        }
+
+        if is_digit(&remain) {
+            let (n, r) = strtol(&remain);
+            remain = r;
+            token.push(Token::Num(n));
+            continue;
+        }
+
+        error!("トークナイズできません");
+    }
+
+    token
+}
+
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        error!("引数の個数が正しくありません");
+    }
+
+    let t = tokenize(&args[1]);
+    let mut token = t.as_slice();
+
+    println!(".intel_syntax noprefix");
+    println!(".globl main");
+    println!("main:");
+
+    let (n, r) = expect_number(token);
+    token = r;
+    println!("  mov rax, {}", n);
+
+    loop {
+        if token.is_empty() {
+            break;
+        }
+
+        if let (true, r) = consume('+', token) {
+            let (n, r) = expect_number(r);
+            token = r;
             println!("  add rax, {}", n);
-            remain = r;
             continue;
-        }
-
-        if remain[0..1].eq("-") {
-            let r = &remain[1..remain.len()];
-            let (n, r) = strtol(r);
+        } else {
+            let r = expect('-', token);
+            let (n, r) = expect_number(r);
+            token = r;
             println!("  sub rax, {}", n);
-            remain = r;
             continue;
         }
-
-        eprintln!("予期しない文字です:{}", &remain[0..remain.len()]);
-        process::exit(1);
     }
 
     println!("  ret");
-    process::exit(0);
-}
-
-fn strtol(value: &str) -> (i32, String) {
-    let position = value
-        .find(|it: char| !it.is_numeric())
-        .unwrap_or(value.len());
-
-    let n: i32 = value[0..position].parse().unwrap();
-    (n, value[position..].to_string())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn strtol_test() {
-        let (n, remain) = strtol("123+");
-        assert_eq!(n, 123);
-        assert_eq!(remain, "+");
-    }
 }
