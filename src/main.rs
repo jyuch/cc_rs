@@ -26,28 +26,22 @@ macro_rules! error {
 
 fn consume(op: char, token: &[Token]) -> (bool, &[Token]) {
     match token {
-        &[Token::Reserved(o), ..] if o == op => {
-            (true, &token[1..])
-        }
-        _ => (false, &token)
+        &[Token::Reserved(o), ..] if o == op => (true, &token[1..]),
+        _ => (false, &token),
     }
 }
 
 fn expect(op: char, token: &[Token]) -> &[Token] {
     match token {
-        &[Token::Reserved(o), ..] if o == op => {
-            &token[1..]
-        }
-        _ => error!("{}ではありません", op)
+        &[Token::Reserved(o), ..] if o == op => &token[1..],
+        _ => error!("{}ではありません", op),
     }
 }
 
 fn expect_number(token: &[Token]) -> (i32, &[Token]) {
     match token {
-        &[Token::Num(i), ..] => {
-            (i, &token[1..])
-        }
-        _ => error!("数ではありません")
+        &[Token::Num(i), ..] => (i, &token[1..]),
+        _ => error!("数ではありません"),
     }
 }
 
