@@ -1,4 +1,4 @@
-use cc_rs::{tokenize, Token, TokenKind};
+use cc_rs::{tokenize::tokenize, Token, TokenKind};
 use std::env;
 
 fn consume(op: char, token: &[Token]) -> (bool, &[Token]) {
