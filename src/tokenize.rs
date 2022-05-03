@@ -1,4 +1,4 @@
-use crate::{Token, TokenKind};
+use crate::Token;
 
 struct Tokenizer {
     source: Vec<char>,
@@ -26,7 +26,7 @@ impl Tokenizer {
     }
 
     fn get(&self) -> Option<char> {
-        self.source.get(self.position).map(|it| it.clone())
+        self.source.get(self.position).map(|it| *it)
     }
 
     fn advance(&mut self) {
@@ -69,11 +69,9 @@ pub fn tokenize(source: Vec<char>) -> Vec<Token> {
             .get()
             .expect("このメッセージが表示されていたらバグです");
 
-        if c.eq(&'+') || c.eq(&'-') {
+        if c.eq(&'+') || c.eq(&'-') || c.eq(&'*') || c.eq(&'/') || c.eq(&'(') || c.eq(&')') {
             input.advance();
-            token.push(Token {
-                kind: TokenKind::Reserved(c),
-            });
+            token.push(Token::reserved(c));
             continue;
         }
 
@@ -81,9 +79,8 @@ pub fn tokenize(source: Vec<char>) -> Vec<Token> {
             let n = input
                 .get_number_and_advance()
                 .expect("このメッセージが表示されていたらバグです");
-            token.push(Token {
-                kind: TokenKind::Num(n),
-            });
+
+            token.push(Token::num(n));
             continue;
         }
 

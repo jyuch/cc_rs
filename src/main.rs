@@ -1,33 +1,48 @@
-use cc_rs::{tokenize::tokenize, Token, TokenKind};
+use cc_rs::parse::parse;
+use cc_rs::tokenize::tokenize;
+use cc_rs::Node;
 use std::env;
 
-fn consume(op: char, token: &[Token]) -> (bool, &[Token]) {
-    match &token {
-        &[t, ..] => match t.kind {
-            TokenKind::Reserved(c) if op.eq(&c) => (true, &token[1..]),
-            _ => (false, &token),
-        },
-        _ => (false, &token),
-    }
-}
+fn gen(node: Box<Node>) {
+    match *node {
+        Node::Num(i) => println!("  push {}", i),
+        Node::Add { lhs, rhs } => {
+            gen(lhs);
+            gen(rhs);
 
-fn expect(op: char, token: &[Token]) -> &[Token] {
-    match &token {
-        &[t, ..] => match t.kind {
-            TokenKind::Reserved(c) if op.eq(&c) => &token[1..],
-            _ => panic!("{}ではありません。", op),
-        },
-        _ => panic!("{}ではありません", op),
-    }
-}
+            println!("  pop rdi");
+            println!("  pop rax");
+            println!("  add rax, rdi");
+            println!("  push rax");
+        }
+        Node::Sub { lhs, rhs } => {
+            gen(lhs);
+            gen(rhs);
 
-fn expect_number(token: &[Token]) -> (u32, &[Token]) {
-    match &token {
-        &[t, ..] => match t.kind {
-            TokenKind::Num(i) => (i, &token[1..]),
-            _ => panic!("数ではありません"),
-        },
-        _ => panic!("数ではありません"),
+            println!("  pop rdi");
+            println!("  pop rax");
+            println!("  sub rax, rdi");
+            println!("  push rax");
+        }
+        Node::Mul { lhs, rhs } => {
+            gen(lhs);
+            gen(rhs);
+
+            println!("  pop rdi");
+            println!("  pop rax");
+            println!("  imul rax, rdi");
+            println!("  push rax");
+        }
+        Node::Div { lhs, rhs } => {
+            gen(lhs);
+            gen(rhs);
+
+            println!("  pop rdi");
+            println!("  pop rax");
+            println!("  cqo");
+            println!("  idiv rdi");
+            println!("  push rax");
+        }
     }
 }
 
@@ -37,35 +52,15 @@ fn main() {
         panic!("引数の個数が正しくありません");
     }
 
-    let t = tokenize(args[1].chars().collect());
-    let mut token = t.as_slice();
+    let token = tokenize(args[1].chars().collect());
+    let node = parse(token);
 
     println!(".intel_syntax noprefix");
     println!(".globl main");
     println!("main:");
 
-    let (n, r) = expect_number(token);
-    token = r;
-    println!("  mov rax, {}", n);
+    gen(node);
 
-    loop {
-        if token.is_empty() {
-            break;
-        }
-
-        if let (true, r) = consume('+', token) {
-            let (n, r) = expect_number(r);
-            token = r;
-            println!("  add rax, {}", n);
-            continue;
-        } else {
-            let r = expect('-', token);
-            let (n, r) = expect_number(r);
-            token = r;
-            println!("  sub rax, {}", n);
-            continue;
-        }
-    }
-
+    println!("  pop rax");
     println!("  ret");
 }
