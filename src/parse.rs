@@ -11,6 +11,42 @@ impl Parser {
     }
 
     fn expr(&mut self) -> Box<Node> {
+        self.equality()
+    }
+
+    fn equality(&mut self) -> Box<Node> {
+        let mut node = self.relational();
+
+        loop {
+            if self.consume("==") {
+                node = Node::eq(node, self.relational());
+            } else if self.consume("!=") {
+                node = Node::ne(node, self.relational());
+            } else {
+                return node;
+            }
+        }
+    }
+
+    fn relational(&mut self) -> Box<Node> {
+        let mut node = self.add();
+
+        loop {
+            if self.consume("<") {
+                node = Node::lt(node, self.add());
+            } else if self.consume("<=") {
+                node = Node::le(node, self.add());
+            } else if self.consume(">") {
+                node = Node::lt(self.add(), node);
+            } else if self.consume(">=") {
+                node = Node::le(self.add(), node);
+            } else {
+                return node;
+            }
+        }
+    }
+
+    fn add(&mut self) -> Box<Node> {
         let mut node = self.mul();
 
         loop {

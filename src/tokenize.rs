@@ -118,6 +118,36 @@ pub fn tokenize(source: Vec<char>) -> Vec<Token> {
             continue;
         }
 
+        if tokenizer.try_consume("==") {
+            token.push(Token::reserved("==".to_string()));
+            continue;
+        }
+
+        if tokenizer.try_consume("!=") {
+            token.push(Token::reserved("!=".to_string()));
+            continue;
+        }
+
+        if tokenizer.try_consume("<=") {
+            token.push(Token::reserved("<=".to_string()));
+            continue;
+        }
+
+        if tokenizer.try_consume(">=") {
+            token.push(Token::reserved(">=".to_string()));
+            continue;
+        }
+
+        if tokenizer.try_consume("<") {
+            token.push(Token::reserved("<".to_string()));
+            continue;
+        }
+
+        if tokenizer.try_consume(">") {
+            token.push(Token::reserved(">".to_string()));
+            continue;
+        }
+
         if tokenizer.try_consume("+") {
             token.push(Token::reserved("+".to_string()));
             continue;
@@ -150,7 +180,10 @@ pub fn tokenize(source: Vec<char>) -> Vec<Token> {
 
         if let Some(value) = tokenizer.try_consume_number(10) {
             token.push(Token::num(value));
+            continue;
         }
+
+        panic!("トークナイズできません {:?}", &tokenizer.input.get());
     }
 
     token

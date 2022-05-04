@@ -1,8 +1,11 @@
+extern crate core;
+
 use cc_rs::parse::parse;
 use cc_rs::tokenize::tokenize;
 use cc_rs::Node;
 use std::env;
 
+#[allow(clippy::boxed_local)]
 fn gen(node: Box<Node>) {
     match *node {
         Node::Num(i) => println!("  push {}", i),
@@ -41,6 +44,50 @@ fn gen(node: Box<Node>) {
             println!("  pop rax");
             println!("  cqo");
             println!("  idiv rdi");
+            println!("  push rax");
+        }
+        Node::Eq { lhs, rhs } => {
+            gen(lhs);
+            gen(rhs);
+
+            println!("  pop rdi");
+            println!("  pop rax");
+            println!("  cmp rax, rdi");
+            println!("  sete al");
+            println!("  movzb rax, al");
+            println!("  push rax");
+        }
+        Node::Ne { lhs, rhs } => {
+            gen(lhs);
+            gen(rhs);
+
+            println!("  pop rdi");
+            println!("  pop rax");
+            println!("  cmp rax, rdi");
+            println!("  setne al");
+            println!("  movzb rax, al");
+            println!("  push rax");
+        }
+        Node::Lt { lhs, rhs } => {
+            gen(lhs);
+            gen(rhs);
+
+            println!("  pop rdi");
+            println!("  pop rax");
+            println!("  cmp rax, rdi");
+            println!("  setl al");
+            println!("  movzb rax, al");
+            println!("  push rax");
+        }
+        Node::Le { lhs, rhs } => {
+            gen(lhs);
+            gen(rhs);
+
+            println!("  pop rdi");
+            println!("  pop rax");
+            println!("  cmp rax, rdi");
+            println!("  setle al");
+            println!("  movzb rax, al");
             println!("  push rax");
         }
     }
