@@ -14,9 +14,9 @@ impl Parser {
         let mut node = self.mul();
 
         loop {
-            if self.consume('+') {
+            if self.consume("+") {
                 node = Node::add(node, self.mul());
-            } else if self.consume('-') {
+            } else if self.consume("-") {
                 node = Node::sub(node, self.mul());
             } else {
                 return node;
@@ -28,9 +28,9 @@ impl Parser {
         let mut node = self.unary();
 
         loop {
-            if self.consume('*') {
+            if self.consume("*") {
                 node = Node::mul(node, self.unary());
-            } else if self.consume('/') {
+            } else if self.consume("/") {
                 node = Node::div(node, self.unary());
             } else {
                 return node;
@@ -39,9 +39,9 @@ impl Parser {
     }
 
     fn unary(&mut self) -> Box<Node> {
-        if self.consume('+') {
+        if self.consume("+") {
             self.primary()
-        } else if self.consume('-') {
+        } else if self.consume("-") {
             Node::sub(Node::num(0), self.primary())
         } else {
             self.primary()
@@ -49,21 +49,21 @@ impl Parser {
     }
 
     fn primary(&mut self) -> Box<Node> {
-        if self.consume('(') {
+        if self.consume("(") {
             let node = self.expr();
-            self.expect(')');
+            self.expect(")");
             node
         } else {
             Node::num(self.expect_number())
         }
     }
 
-    fn consume(&mut self, op: char) -> bool {
+    fn consume(&mut self, op: &str) -> bool {
         let t = self.token.get(self.position);
 
         match t {
-            Some(t) => match t.kind {
-                TokenKind::Reserved(c) if op.eq(&c) => {
+            Some(t) => match &t.kind {
+                TokenKind::Reserved(c) if op.eq(c) => {
                     self.position += 1;
                     true
                 }
@@ -73,12 +73,12 @@ impl Parser {
         }
     }
 
-    fn expect(&mut self, op: char) {
+    fn expect(&mut self, op: &str) {
         let t = self.token.get(self.position);
 
         match t {
-            Some(t) => match t.kind {
-                TokenKind::Reserved(c) if op.eq(&c) => {
+            Some(t) => match &t.kind {
+                TokenKind::Reserved(c) if op.eq(c) => {
                     self.position += 1;
                 }
                 _ => panic!("{}ではありません。", op),

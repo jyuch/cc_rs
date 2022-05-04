@@ -3,7 +3,7 @@ pub mod tokenize;
 
 #[derive(Debug)]
 pub enum TokenKind {
-    Reserved(char),
+    Reserved(String),
     Num(u32),
 }
 
@@ -13,14 +13,12 @@ pub struct Token {
 }
 
 impl Token {
-    #[allow(unused)]
-    pub fn reserved(op: char) -> Self {
+    pub fn reserved(op: String) -> Self {
         Self {
             kind: TokenKind::Reserved(op),
         }
     }
 
-    #[allow(unused)]
     pub fn num(value: u32) -> Self {
         Self {
             kind: TokenKind::Num(value),
