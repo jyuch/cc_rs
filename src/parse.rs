@@ -25,16 +25,26 @@ impl Parser {
     }
 
     fn mul(&mut self) -> Box<Node> {
-        let mut node = self.primary();
+        let mut node = self.unary();
 
         loop {
             if self.consume('*') {
-                node = Node::mul(node, self.primary());
+                node = Node::mul(node, self.unary());
             } else if self.consume('/') {
-                node = Node::div(node, self.primary());
+                node = Node::div(node, self.unary());
             } else {
                 return node;
             }
+        }
+    }
+
+    fn unary(&mut self) -> Box<Node> {
+        if self.consume('+') {
+            self.primary()
+        } else if self.consume('-') {
+            Node::sub(Node::num(0), self.primary())
+        } else {
+            self.primary()
         }
     }
 
